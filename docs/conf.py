@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# vc-emotion-detection documentation build configuration file, created by
+# mlops-mini-project documentation build configuration file, created by
 # sphinx-quickstart.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -41,7 +41,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'vc-emotion-detection'
+project = u'mlops-mini-project'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -164,7 +164,7 @@ html_static_path = ['_static']
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'vc-emotion-detectiondoc'
+htmlhelp_basename = 'mlops-mini-projectdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -184,9 +184,9 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
     ('index',
-     'vc-emotion-detection.tex',
-     u'vc-emotion-detection Documentation',
-     u"campusx", 'manual'),
+     'mlops-mini-project.tex',
+     u'mlops-mini-project Documentation',
+     u"nitish", 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -215,8 +215,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'vc-emotion-detection', u'vc-emotion-detection Documentation',
-     [u"campusx"], 1)
+    ('index', 'mlops-mini-project', u'mlops-mini-project Documentation',
+     [u"nitish"], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -229,9 +229,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'vc-emotion-detection', u'vc-emotion-detection Documentation',
-     u"campusx", 'vc-emotion-detection',
-     'a ml project to predict emotions from text', 'Miscellaneous'),
+    ('index', 'mlops-mini-project', u'mlops-mini-project Documentation',
+     u"nitish", 'mlops-mini-project',
+     'a small mlops project', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.

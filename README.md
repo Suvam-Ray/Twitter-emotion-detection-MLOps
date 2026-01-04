@@ -1,7 +1,7 @@
-vc-emotion-detection
+mlops-mini-project
 ==============================
 
-a ml project to predict emotions from text
+a small mlops project
 
 Project Organization
 ------------

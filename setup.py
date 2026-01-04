@@ -4,7 +4,7 @@ setup(
     name='src',
     packages=find_packages(),
     version='0.1.0',
-    description='a ml project to predict emotions from text',
-    author='campusx',
+    description='a small mlops project',
+    author='nitish',
     license='',
 )

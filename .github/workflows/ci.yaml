@@ -51,22 +51,23 @@ jobs:
           DAGSHUB_PAT: ${{ secrets.DAGSHUB_PAT }}
         run: python -m unittest tests/test_flask_app.py
 
-      - name: Log in to Docker Hub
-        if: success()
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Login to AWS ECR
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 976386478909.dkr.ecr.ap-south-1.amazonaws.com
 
       - name: Build Docker image
-        if: success()
         run: |
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/emotion2:latest .
+          docker build -t mlops_deployment_testing .
 
-      - name: Push Docker image to Docker Hub
-        if: success()
+      - name: Tag Docker image
         run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/emotion2:latest
+          docker tag mlops_deployment_testing:latest 976386478909.dkr.ecr.ap-south-1.amazonaws.com/mlops_deployment_testing:latest
+
+      - name: Push Docker image to AWS ECR
+        run: |
+          docker push 976386478909.dkr.ecr.ap-south-1.amazonaws.com/mlops_deployment_testing:latest
 
       - name: Deploy to EC2
         if: success()
@@ -76,9 +77,13 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/emotion2:latest
+            aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws configure set default.region ap-south-1
+            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 976386478909.dkr.ecr.ap-south-1.amazonaws.com
+            docker pull 976386478909.dkr.ecr.ap-south-1.amazonaws.com/mlops_deployment_testing:latest
             docker stop my-app || true
             docker rm my-app || true
-            docker run -d -p 80:5000 --name my-app \
-              -e DAGSHUB_PAT=${{ secrets.DAGSHUB_PAT }} \
-              ${{ secrets.DOCKER_HUB_USERNAME }}/emotion2:latest
+            docker run -d -p 80:5000 -e DAGSHUB_PAT=${{ secrets.DAGSHUB_PAT }} --name my-app 976386478909.dkr.ecr.ap-south-1.amazonaws.com/mlops_deployment_testing:latest
+
+      

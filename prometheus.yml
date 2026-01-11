@@ -31,8 +31,14 @@ scrape_configs:
         labels:
           app: "prometheus"
 
-  - job_name: "my_ml_app"
+  - job_name: "Sentiment Analysis App"
     static_configs:
       - targets: ["localhost:8000"]
         labels:
-          app: "my_ml_app"
+          app: "Sentiment Analysis App"
+
+  - job_name: "windows_system"
+    static_configs:
+      - targets: ["localhost:9182"]
+        labels:
+          app: "windows_system"

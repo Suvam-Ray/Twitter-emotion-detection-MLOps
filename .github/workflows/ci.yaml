@@ -52,38 +52,52 @@ jobs:
         run: python -m unittest tests/test_flask_app.py
 
       - name: Login to AWS ECR
+        if: success()
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 976386478909.dkr.ecr.ap-south-1.amazonaws.com
 
       - name: Build Docker image
+        if: success()
         run: |
-          docker build -t mlops_deployment_testing .
+          docker build -t campusx_ecr .
 
       - name: Tag Docker image
+        if: success()
         run: |
           docker tag mlops_deployment_testing:latest 976386478909.dkr.ecr.ap-south-1.amazonaws.com/mlops_deployment_testing:latest
 
       - name: Push Docker image to AWS ECR
+        if: success()
         run: |
           docker push 976386478909.dkr.ecr.ap-south-1.amazonaws.com/mlops_deployment_testing:latest
 
-      - name: Deploy to EC2
+      # Zip the required files
+      - name: Zip files for deployment
         if: success()
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws configure set default.region ap-south-1
-            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 976386478909.dkr.ecr.ap-south-1.amazonaws.com
-            docker pull 976386478909.dkr.ecr.ap-south-1.amazonaws.com/mlops_deployment_testing:latest
-            docker stop my-app || true
-            docker rm my-app || true
-            docker run -d -p 80:5000 -e DAGSHUB_PAT=${{ secrets.DAGSHUB_PAT }} --name my-app 976386478909.dkr.ecr.ap-south-1.amazonaws.com/mlops_deployment_testing:latest
+        run: |
+          zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
+
+      # Upload the ZIP file to S3
+      - name: Upload ZIP to S3
+        if: success()
+        run: |
+          aws s3 cp deployment.zip s3://campusxcodedeploybucket/deployment.zip
+
+      # Deploy to AWS CodeDeploy using the uploaded ZIP file
+      - name: Deploy to AWS CodeDeploy
+        if: success()
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws deploy create-deployment \
+            --application-name MyDockerApp2 \
+            --deployment-config-name CodeDeployDefault.OneAtATime \
+            --deployment-group-name MyDockerAppASGDeploymentGroup \
+            --s3-location bucket=campusxcodedeploybucket,key=deployment.zip,bundleType=zip \
+            --file-exists-behavior OVERWRITE \
+            --region ap-southeast-2
+
 
       

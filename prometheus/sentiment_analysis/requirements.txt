@@ -1,7 +1,0 @@
-Flask
-nltk
-numpy
-pandas
-gunicorn
-prometheus-client
-scikit-learn

@@ -56,48 +56,48 @@ jobs:
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 976386478909.dkr.ecr.ap-south-1.amazonaws.com
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 891377050051.dkr.ecr.ap-south-1.amazonaws.com
 
       - name: Build Docker image
         if: success()
         run: |
-          docker build -t campusx_ecr .
+          docker build -t himanshu/sentiment-analysis .
 
       - name: Tag Docker image
         if: success()
         run: |
-          docker tag mlops_deployment_testing:latest 976386478909.dkr.ecr.ap-south-1.amazonaws.com/mlops_deployment_testing:latest
+          docker tag himanshu/sentiment-analysis:latest 891377050051.dkr.ecr.ap-south-1.amazonaws.com/himanshu/sentiment-analysis:latest
 
       - name: Push Docker image to AWS ECR
         if: success()
         run: |
-          docker push 976386478909.dkr.ecr.ap-south-1.amazonaws.com/mlops_deployment_testing:latest
+          docker push 891377050051.dkr.ecr.ap-south-1.amazonaws.com/himanshu/sentiment-analysis:latest
 
-      # Zip the required files
-      - name: Zip files for deployment
-        if: success()
-        run: |
-          zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
+      # # Zip the required files
+      # - name: Zip files for deployment
+      #   if: success()
+      #   run: |
+      #     zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
 
-      # Upload the ZIP file to S3
-      - name: Upload ZIP to S3
-        if: success()
-        run: |
-          aws s3 cp deployment.zip s3://campusxcodedeploybucket/deployment.zip
+      # # Upload the ZIP file to S3
+      # - name: Upload ZIP to S3
+      #   if: success()
+      #   run: |
+      #     aws s3 cp deployment.zip s3://sentiment-app-deployment-bucket/deployment.zip
 
-      # Deploy to AWS CodeDeploy using the uploaded ZIP file
-      - name: Deploy to AWS CodeDeploy
-        if: success()
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws deploy create-deployment \
-            --application-name MyDockerApp2 \
-            --deployment-config-name CodeDeployDefault.OneAtATime \
-            --deployment-group-name MyDockerAppASGDeploymentGroup \
-            --s3-location bucket=campusxcodedeploybucket,key=deployment.zip,bundleType=zip \
-            --file-exists-behavior OVERWRITE \
-            --region ap-southeast-2
+      # # Deploy to AWS CodeDeploy using the uploaded ZIP file
+      # - name: Deploy to AWS CodeDeploy
+      #   if: success()
+      #   run: |
+      #     aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws deploy create-deployment \
+      #       --application-name Sentiment-Analysis-App \
+      #       --deployment-config-name CodeDeployDefault.OneAtATime \
+      #       --deployment-group-name ASGDeploymentGroup \
+      #       --s3-location bucket=sentiment-app-deployment-bucket,key=deployment.zip,bundleType=zip \
+      #       --file-exists-behavior OVERWRITE \
+      #       --region ap-south-1
 
 
       

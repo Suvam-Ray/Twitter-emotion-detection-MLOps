@@ -1,19 +1,19 @@
 # updated app.py
 
 from flask import Flask, render_template,request
-import mlflow
 import pickle
-import os
 import pandas as pd
-
 import numpy as np
 import pandas as pd
-import os
 import re
-import nltk
 import string
+import mlflow
+import os
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+from prometheus_client import Summary, Counter
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from prometheus_client import make_wsgi_app
 
 def lemmatization(text):
     """Lemmatize the text."""
@@ -68,6 +68,28 @@ def normalize_text(text):
     return text
 
 
+# define the metrics
+RESPONSE_LATENCY = Summary(name="response_latency_seconds",
+                  documentation="Latency of prediction requests in seconds")
+
+TOKENS_COUNTER = Counter(name="input_tokens_total",
+                  documentation="Total number of tokens processed in prediction requests")
+
+HAPPY_COUNTER = Counter(name="happy_predictions_total",
+                  documentation="Total number of happy predictions made")
+
+SAD_COUNTER = Counter(name="sad_predictions_total",
+                  documentation="Total number of sad predictions made")
+
+
+# make the flask app
+app = Flask(__name__)
+
+# Add prometheus wsgi middleware to route /metrics requests
+app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
+    '/metrics': make_wsgi_app()
+})
+
 # Set up DagsHub credentials for MLflow tracking
 dagshub_token = os.getenv("DAGSHUB_PAT")
 if not dagshub_token:
@@ -77,13 +99,11 @@ os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
 os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
 dagshub_url = "https://dagshub.com"
-repo_owner = "Suvam-Ray"
-repo_name = "Twitter-emotion-detection-MLOps"
+repo_owner = "himanshu1703"
+repo_name = "monitoring-sentiment-analysis-project"
 
 # Set up MLflow tracking URI
 mlflow.set_tracking_uri(f'{dagshub_url}/{repo_owner}/{repo_name}.mlflow')
-
-app = Flask(__name__)
 
 # load model from model registry
 def get_latest_model_version(model_name):
@@ -101,17 +121,30 @@ model = mlflow.pyfunc.load_model(model_uri)
 
 vectorizer = pickle.load(open('models/vectorizer.pkl','rb'))
 
+def count_tokens(tokens):
+    """Process tokens and update the token counter"""
+    number_of_tokens = len(tokens)
+    # Increment the tokens counter
+    TOKENS_COUNTER.inc(number_of_tokens)  
+    
+    
 @app.route('/')
 def home():
     return render_template('index.html',result=None)
 
 @app.route('/predict', methods=['POST'])
+@RESPONSE_LATENCY.time()  # Measure the latency of the prediction request
 def predict():
 
     text = request.form['text']
 
     # clean
     text = normalize_text(text)
+    
+    # split the text into tokens
+    tokens = text.split(" ")
+    # count tokens
+    count_tokens(tokens)
 
     # bow
     features = vectorizer.transform([text])
@@ -122,9 +155,15 @@ def predict():
 
     # prediction
     result = model.predict(features_df)
+    
+    # get the result
+    if result[0] == 1:
+        HAPPY_COUNTER.inc()  # Increment happy predictions counter
+    elif result[0] == 0:
+        SAD_COUNTER.inc()  # Increment sad predictions counter
 
     # show
     return render_template('index.html', result=result[0])
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    app.run(host="0.0.0.0", port=8000)

@@ -5,7 +5,7 @@
         <title>Sentiment Analysis</title>
     </head>
 
-    <body style="background-color: brown">
+    <body style="background-color:white">
         <h1>Sentiment Analysis</h1>
         <form action="/predict" method="POST">
             <label>Write text:</label><br>
@@ -16,8 +16,10 @@
         {% if result is not none %}
             {% if result == 1 %}
                 <h2>Happy</h2>
-            {% else %}
+            {% elif result == 0 %}
                 <h2>Sad</h2>
+            {% else %}
+                <h2>Neutral</h2>
             {% endif %}
         {% endif %}
     </body>
